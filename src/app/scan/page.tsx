@@ -1,5 +1,6 @@
 'use client';
 
+import 'regenerator-runtime/runtime';
 import { analyzeProduct, type AnalyzeProductOutput } from '@/ai/flows/analyze-product-ingredients';
 import { processVoiceCommand } from '@/ai/flows/process-voice-commands';
 import { AnalysisResultCard } from '@/components/analysis-result-card';
@@ -9,7 +10,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/use-user-profile';
-import type { MockProduct } from '@/lib/types';
 import { Barcode, Mic, Upload, AlertTriangle, FileWarning, Info, Video, CameraOff } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -29,6 +29,7 @@ export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -154,24 +155,63 @@ export default function ScanPage() {
        toast({ title: 'No product analyzed', description: 'Please scan a product before using voice commands.' });
        return;
     }
-    toast({ title: 'Listening...', description: 'Processing command: "Is this safe for me?"' });
-    try {
-        const result = await processVoiceCommand({
-            voiceCommand: 'Is this product safe for me and what are some alternatives?',
-            healthProfile: `Name: ${profile.name}, Age: ${profile.age}, Conditions: ${profile.medicalConditions}`,
-            productDetails: `${analysis.productName}: ${JSON.stringify(analysis.details)}`
-        });
-        toast({
-            title: 'AI Assistant Says:',
-            description: result.response,
-            duration: 9000,
-        });
-    } catch(e) {
-        toast({
-            title: 'Voice command failed',
-            variant: 'destructive'
-        });
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ title: 'Voice recognition not supported', description: 'Your browser does not support voice recognition.', variant: 'destructive' });
+      return;
     }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      toast({ title: 'Listening...', description: 'Please speak your command.' });
+    };
+
+    recognition.onresult = async (event) => {
+      const voiceCommand = event.results[0][0].transcript;
+      toast({ title: 'Processing command...', description: `"${voiceCommand}"` });
+      try {
+        const result = await processVoiceCommand({
+          voiceCommand: voiceCommand,
+          healthProfile: `Name: ${profile.name}, Age: ${profile.age}, Conditions: ${profile.medicalConditions}`,
+          productDetails: `${analysis.productName}: ${JSON.stringify(analysis.details)}`
+        });
+        toast({
+          title: 'AI Assistant Says:',
+          description: result.response,
+          duration: 9000,
+        });
+      } catch (e) {
+        toast({
+          title: 'Voice command failed',
+          description: 'Could not process your command.',
+          variant: 'destructive'
+        });
+      }
+    };
+
+    recognition.onerror = (event) => {
+      if (event.error === 'no-speech') {
+        toast({ title: 'No speech detected', description: 'Please try again.', variant: 'destructive' });
+      } else if (event.error === 'audio-capture') {
+         toast({ title: 'Microphone error', description: 'Could not capture audio. Please check your microphone.', variant: 'destructive' });
+      } else if (event.error === 'not-allowed') {
+        toast({ title: 'Permission denied', description: 'Please allow microphone access to use voice commands.', variant: 'destructive' });
+      } else {
+        toast({ title: 'An error occurred', description: 'Please try again.', variant: 'destructive' });
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
   }
 
   const renderIdleContent = () => (
@@ -266,8 +306,8 @@ export default function ScanPage() {
                  <Button onClick={() => window.location.reload()}>
                     <Video className="mr-2 h-4 w-4" /> Scan Another
                 </Button>
-                <Button variant="outline" onClick={handleVoiceCommand}>
-                    <Mic className="mr-2 h-4 w-4" /> Ask AI Assistant
+                <Button variant="outline" onClick={handleVoiceCommand} disabled={isListening}>
+                    <Mic className="mr-2 h-4 w-4" /> {isListening ? 'Listening...' : 'Ask AI Assistant'}
                 </Button>
               </div>
 

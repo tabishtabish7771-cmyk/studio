@@ -20,3 +20,11 @@ export type MockProduct = {
   imageHint: string;
   details: ProductDetails;
 };
+
+// Add this to your global types or a relevant file
+declare global {
+    interface Window {
+        SpeechRecognition: any;
+        webkitSpeechRecognition: any;
+    }
+}
