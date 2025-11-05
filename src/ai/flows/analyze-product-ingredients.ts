@@ -52,7 +52,7 @@ const analyzeProductPrompt = ai.definePrompt({
   1. Identify the product in the image.
   2. Estimate its nutritional information (calories, sugar, sodium, fat).
   3. Analyze the product against the user's health profile to determine if it is 'safe', 'risky', or 'unsafe'.
-  4. Provide a brief explanation for your analysis.
+  4. Provide a brief explanation for your analysis. If a product is 'risky', explain that it can be consumed in moderation, but not continuously, and suggest how much could be consumed safely.
   5. Suggest 2-3 healthier alternative products.
 
   User Health Profile:
