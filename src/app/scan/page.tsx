@@ -29,24 +29,28 @@ export default function ScanPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const getCameraPermission = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+      // Only request camera if not in a result state
+      if (scanState === 'idle') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+          setHasCameraPermission(true);
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Please enable camera permissions in your browser settings to use this feature.',
+          });
         }
-        setHasCameraPermission(true);
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings to use this feature.',
-        });
       }
     };
 
@@ -57,10 +61,9 @@ export default function ScanPage() {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [toast]);
+  }, [toast, scanState]);
 
-
-  const handleScan = async () => {
+  const startAnalysis = async () => {
     if (!profile.name || !profile.medicalConditions) {
       toast({
         title: 'Profile Incomplete',
@@ -70,18 +73,18 @@ export default function ScanPage() {
       });
       return;
     }
-
+  
     setScanState('loading');
     setAnalysis(null);
-
+  
     // Stop camera stream when loading/analyzing
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
-
+  
     const randomProduct = mockProducts[Math.floor(Math.random() * mockProducts.length)];
     setProduct(randomProduct);
-
+  
     try {
       const result = await analyzeProduct({
         healthProfile: {
@@ -104,6 +107,23 @@ export default function ScanPage() {
       });
     }
   };
+
+  const handleScan = () => {
+    startAnalysis();
+  };
+  
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // For demonstration, we'll just trigger the same analysis as a scan
+      startAnalysis();
+    }
+  };
+
 
   const handleVoiceCommand = async () => {
     if (scanState !== 'result' || !product) {
@@ -155,14 +175,15 @@ export default function ScanPage() {
             <span className="text-amber-600 flex items-center justify-center gap-2">
               <AlertTriangle className="h-5 w-5"/> Please create a profile to get started.
             </span>
-           ) : "Position a product's barcode in front of the camera and click Scan."
+           ) : "Position a product's barcode in front of the camera and click Scan, or upload an image."
           }
         </p>
         <div className="flex gap-4 justify-center">
            <Button size="lg" onClick={handleScan} disabled={!profileLoaded || !profile.name || !hasCameraPermission}>
             <Barcode className="mr-2 h-5 w-5" /> Scan a Product
           </Button>
-          <Button size="lg" variant="outline" disabled={true}>
+          <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+          <Button size="lg" variant="outline" onClick={handleUploadClick} disabled={!profileLoaded || !profile.name}>
             <Upload className="mr-2 h-5 w-5" /> Upload Image
           </Button>
         </div>
