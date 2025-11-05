@@ -11,10 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/use-user-profile';
 import { mockProducts } from '@/lib/mock-data';
 import type { MockProduct } from '@/lib/types';
-import { Barcode, Mic, Upload, AlertTriangle, FileWarning, Info } from 'lucide-react';
+import { Barcode, Mic, Upload, AlertTriangle, FileWarning, Info, Video, CameraOff } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 
 type ScanState = 'idle' | 'loading' | 'result' | 'error';
 
@@ -24,6 +26,39 @@ export default function ScanPage() {
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [product, setProduct] = useState<MockProduct | null>(null);
   const [analysis, setAnalysis] = useState<AnalyzeProductOutput | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    const getCameraPermission = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        setHasCameraPermission(true);
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+        setHasCameraPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Camera Access Denied',
+          description: 'Please enable camera permissions in your browser settings to use this feature.',
+        });
+      }
+    };
+
+    getCameraPermission();
+
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [toast]);
+
 
   const handleScan = async () => {
     if (!profile.name || !profile.medicalConditions) {
@@ -38,6 +73,11 @@ export default function ScanPage() {
 
     setScanState('loading');
     setAnalysis(null);
+
+    // Stop camera stream when loading/analyzing
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
 
     const randomProduct = mockProducts[Math.floor(Math.random() * mockProducts.length)];
     setProduct(randomProduct);
@@ -90,6 +130,52 @@ export default function ScanPage() {
     }
   }
 
+  const renderIdleContent = () => (
+     <div className="text-center space-y-6 flex flex-col items-center">
+        <Card className="w-full max-w-lg aspect-video overflow-hidden shadow-lg relative">
+            <CardContent className="p-0">
+                <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                {hasCameraPermission === false && (
+                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white p-4">
+                        <CameraOff className="h-16 w-16 mb-4" />
+                        <h2 className="text-xl font-bold">Camera Access Denied</h2>
+                        <p className="text-sm text-center">Please enable camera permissions in your browser settings to scan products.</p>
+                    </div>
+                )}
+                 {hasCameraPermission === null && (
+                    <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+                       <Skeleton className="w-full h-full" />
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+        <h1 className="font-headline text-3xl font-bold tracking-tight">Ready to Scan?</h1>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          {profileLoaded && !profile.name ? (
+            <span className="text-amber-600 flex items-center justify-center gap-2">
+              <AlertTriangle className="h-5 w-5"/> Please create a profile to get started.
+            </span>
+           ) : "Position a product's barcode in front of the camera and click Scan."
+          }
+        </p>
+        <div className="flex gap-4 justify-center">
+           <Button size="lg" onClick={handleScan} disabled={!profileLoaded || !profile.name || !hasCameraPermission}>
+            <Barcode className="mr-2 h-5 w-5" /> Scan a Product
+          </Button>
+          <Button size="lg" variant="outline" disabled={true}>
+            <Upload className="mr-2 h-5 w-5" /> Upload Image
+          </Button>
+        </div>
+         {!profile.name && profileLoaded && 
+            <Button asChild variant="default"><Link href="/profile">Create Profile</Link></Button>
+         }
+         {profile.name && profileLoaded && 
+            <p className="text-xs text-muted-foreground flex items-center justify-center gap-1"><Info className="h-3 w-3"/>Using profile for {profile.name}.</p>
+         }
+      </div>
+  )
+
+
   const renderContent = () => {
     switch (scanState) {
       case 'loading':
@@ -132,8 +218,8 @@ export default function ScanPage() {
               <AnalysisResultCard status={analysis.status} explanation={analysis.explanation} />
               
               <div className="flex items-center justify-center gap-4">
-                 <Button onClick={handleScan}>
-                    <Barcode className="mr-2 h-4 w-4" /> Scan Another
+                 <Button onClick={() => window.location.reload()}>
+                    <Video className="mr-2 h-4 w-4" /> Scan Another
                 </Button>
                 <Button variant="outline" onClick={handleVoiceCommand}>
                     <Mic className="mr-2 h-4 w-4" /> Ask AI Assistant
@@ -149,41 +235,7 @@ export default function ScanPage() {
       case 'error':
         return <div className="text-center text-red-500"><FileWarning className="mx-auto h-12 w-12"/>An error occurred. Please try scanning again.</div>
       default:
-        return (
-          <div className="text-center space-y-6">
-            <div className="flex justify-center">
-              <div className="relative">
-                  <Barcode className="h-48 w-48 text-primary/20" strokeWidth={0.5}/>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-full h-1 bg-primary/70 animate-pulse rounded-full"/>
-                  </div>
-              </div>
-            </div>
-            <h1 className="font-headline text-3xl font-bold tracking-tight">Ready to Scan?</h1>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {profileLoaded && !profile.name ? (
-                <span className="text-amber-600 flex items-center justify-center gap-2">
-                  <AlertTriangle className="h-5 w-5"/> Please create a profile to get started.
-                </span>
-               ) : "Click the button to scan a product and get your personalized health analysis."
-              }
-            </p>
-            <div className="flex gap-4 justify-center">
-               <Button size="lg" onClick={handleScan} disabled={!profileLoaded || !profile.name}>
-                <Barcode className="mr-2 h-5 w-5" /> Scan a Product
-              </Button>
-              <Button size="lg" variant="outline" disabled={!profileLoaded || !profile.name}>
-                <Upload className="mr-2 h-5 w-5" /> Upload Image
-              </Button>
-            </div>
-             {!profile.name && profileLoaded && 
-                <Button asChild variant="default"><Link href="/profile">Create Profile</Link></Button>
-             }
-             {profile.name && profileLoaded && 
-                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1"><Info className="h-3 w-3"/>Using profile for {profile.name}.</p>
-             }
-          </div>
-        );
+        return renderIdleContent();
     }
   };
 
