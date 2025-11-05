@@ -18,18 +18,19 @@ const AnalyzeProductInputSchema = z.object({
     gender: z.string().describe('User gender'),
     medicalConditions: z.array(z.string()).describe('User medical conditions'),
   }).describe('User health profile.'),
-  productDetails: z.object({
-    ingredients: z.string().describe('List of product ingredients.'),
-    calories: z.number().describe('Calories per serving.'),
-    sugar: z.number().describe('Sugar content per serving (grams).'),
-    sodium: z.number().describe('Sodium content per serving (milligrams).'),
-    fat: z.number().describe('Fat content per serving (grams).'),
-  }).describe('Product details including ingredients and nutritional information.'),
+  productImage: z.string().describe("A photo of a product, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
 });
 
 export type AnalyzeProductInput = z.infer<typeof AnalyzeProductInputSchema>;
 
 const AnalyzeProductOutputSchema = z.object({
+  productName: z.string().describe('The name of the identified product.'),
+  details: z.object({
+      calories: z.number().describe('Calories per serving.'),
+      sugar: z.number().describe('Sugar content per serving (grams).'),
+      sodium: z.number().describe('Sodium content per serving (milligrams).'),
+      fat: z.number().describe('Fat content per serving (grams).'),
+  }),
   safe: z.boolean().describe('Whether the product is safe for the user.'),
   status: z.enum(['safe', 'risky', 'unsafe']).describe('Safety status color-coded.'),
   explanation: z.string().describe('AI-generated explanation of the safety assessment.'),
@@ -46,30 +47,24 @@ const analyzeProductPrompt = ai.definePrompt({
   name: 'analyzeProductPrompt',
   input: {schema: AnalyzeProductInputSchema},
   output: {schema: AnalyzeProductOutputSchema},
-  prompt: `You are a health expert analyzing a product's ingredients and nutritional information against a user's health profile to determine if it's safe for them.
+  prompt: `You are a health expert. A user has provided an image of a product.
+  Your task is to:
+  1. Identify the product in the image.
+  2. Estimate its nutritional information (calories, sugar, sodium, fat).
+  3. Analyze the product against the user's health profile to determine if it is 'safe', 'risky', or 'unsafe'.
+  4. Provide a brief explanation for your analysis.
+  5. Suggest 2-3 healthier alternative products.
 
-  Health Profile:
+  User Health Profile:
   Name: {{{healthProfile.name}}}
   Age: {{{healthProfile.age}}}
   Gender: {{{healthProfile.gender}}}
   Medical Conditions: {{#each healthProfile.medicalConditions}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
-  Product Details:
-  Ingredients: {{{productDetails.ingredients}}}
-  Calories: {{{productDetails.calories}}} kcal
-  Sugar: {{{productDetails.sugar}}}g
-  Sodium: {{{productDetails.sodium}}}mg
-  Fat: {{{productDetails.fat}}}g
+  Product Image:
+  {{media url=productImage}}
 
-  Analyze the product details considering the user's health profile. Determine if the product is safe, risky, or unsafe. Provide a short explanation. Suggest 2-3 alternative products with better compatibility.
-
-  Output the result in JSON format:
-  {
-    "safe": true/false,
-    "status": "safe"/"risky"/"unsafe",
-    "explanation": "Explanation of the safety assessment.",
-    "recommendations": ["Alternative product 1", "Alternative product 2", "Alternative product 3"]
-  }`,
+  Analyze the product and respond in the specified JSON format.`,
 });
 
 const analyzeProductFlow = ai.defineFlow(

@@ -9,7 +9,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useUserProfile } from '@/hooks/use-user-profile';
-import { mockProducts } from '@/lib/mock-data';
 import type { MockProduct } from '@/lib/types';
 import { Barcode, Mic, Upload, AlertTriangle, FileWarning, Info, Video, CameraOff } from 'lucide-react';
 import Image from 'next/image';
@@ -24,8 +23,8 @@ export default function ScanPage() {
   const { profile, isLoaded: profileLoaded } = useUserProfile();
   const { toast } = useToast();
   const [scanState, setScanState] = useState<ScanState>('idle');
-  const [product, setProduct] = useState<MockProduct | null>(null);
   const [analysis, setAnalysis] = useState<AnalyzeProductOutput | null>(null);
+  const [scannedImage, setScannedImage] = useState<string | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -33,7 +32,6 @@ export default function ScanPage() {
 
   useEffect(() => {
     const getCameraPermission = async () => {
-      // Only request camera if not in a result state
       if (scanState === 'idle') {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -63,7 +61,7 @@ export default function ScanPage() {
     };
   }, [toast, scanState]);
 
-  const startAnalysis = async () => {
+  const startAnalysis = async (imageDataUri: string) => {
     if (!profile.name || !profile.medicalConditions) {
       toast({
         title: 'Profile Incomplete',
@@ -76,15 +74,12 @@ export default function ScanPage() {
   
     setScanState('loading');
     setAnalysis(null);
+    setScannedImage(imageDataUri);
   
-    // Stop camera stream when loading/analyzing
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
-  
-    const randomProduct = mockProducts[Math.floor(Math.random() * mockProducts.length)];
-    setProduct(randomProduct);
-  
+    
     try {
       const result = await analyzeProduct({
         healthProfile: {
@@ -93,7 +88,7 @@ export default function ScanPage() {
           gender: profile.gender || 'other',
           medicalConditions: profile.medicalConditions.split(/,|\n/).map(s => s.trim()).filter(Boolean),
         },
-        productDetails: randomProduct.details,
+        productImage: imageDataUri,
       });
       setAnalysis(result);
       setScanState('result');
@@ -108,8 +103,31 @@ export default function ScanPage() {
     }
   };
 
+  const captureFrame = (): string | null => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg');
+      }
+    }
+    return null;
+  }
+
   const handleScan = () => {
-    startAnalysis();
+    const imageDataUri = captureFrame();
+    if (imageDataUri) {
+      startAnalysis(imageDataUri);
+    } else {
+       toast({
+        title: 'Scan Failed',
+        description: 'Could not capture an image from the camera. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
   
   const handleUploadClick = () => {
@@ -119,15 +137,21 @@ export default function ScanPage() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // For demonstration, we'll just trigger the same analysis as a scan
-      startAnalysis();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageDataUri = e.target?.result as string;
+        if (imageDataUri) {
+          startAnalysis(imageDataUri);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
 
   const handleVoiceCommand = async () => {
-    if (scanState !== 'result' || !product) {
-       toast({ title: 'No product scanned', description: 'Please scan a product before using voice commands.' });
+    if (scanState !== 'result' || !analysis) {
+       toast({ title: 'No product analyzed', description: 'Please scan a product before using voice commands.' });
        return;
     }
     toast({ title: 'Listening...', description: 'Processing command: "Is this safe for me?"' });
@@ -135,7 +159,7 @@ export default function ScanPage() {
         const result = await processVoiceCommand({
             voiceCommand: 'Is this product safe for me and what are some alternatives?',
             healthProfile: `Name: ${profile.name}, Age: ${profile.age}, Conditions: ${profile.medicalConditions}`,
-            productDetails: `${product.name}: ${JSON.stringify(product.details)}`
+            productDetails: `${analysis.productName}: ${JSON.stringify(analysis.details)}`
         });
         toast({
             title: 'AI Assistant Says:',
@@ -175,7 +199,7 @@ export default function ScanPage() {
             <span className="text-amber-600 flex items-center justify-center gap-2">
               <AlertTriangle className="h-5 w-5"/> Please create a profile to get started.
             </span>
-           ) : "Position a product's barcode in front of the camera and click Scan, or upload an image."
+           ) : "Position a product in front of the camera and click Scan, or upload an image."
           }
         </p>
         <div className="flex gap-4 justify-center">
@@ -219,18 +243,18 @@ export default function ScanPage() {
         );
       case 'result':
         return (
-          product && analysis && (
+          analysis && (
             <div className="w-full max-w-4xl mx-auto animate-in fade-in-50 duration-500 space-y-8">
               <Card className="shadow-md overflow-hidden">
                 <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                   <Image src={product.imageUrl} alt={product.name} width={160} height={160} className="rounded-lg mx-auto shadow-sm" data-ai-hint={product.imageHint}/>
+                   {scannedImage && <Image src={scannedImage} alt={analysis.productName} width={160} height={160} className="rounded-lg mx-auto shadow-sm" />}
                   <div className="md:col-span-2">
-                    <h2 className="text-2xl font-bold font-headline">{product.name}</h2>
+                    <h2 className="text-2xl font-bold font-headline">{analysis.productName}</h2>
                      <div className="text-sm text-muted-foreground mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
-                        <span>Calories: {product.details.calories}kcal</span>
-                        <span>Sugar: {product.details.sugar}g</span>
-                        <span>Sodium: {product.details.sodium}mg</span>
-                        <span>Fat: {product.details.fat}g</span>
+                        <span>Calories: {analysis.details.calories}kcal</span>
+                        <span>Sugar: {analysis.details.sugar}g</span>
+                        <span>Sodium: {analysis.details.sodium}mg</span>
+                        <span>Fat: {analysis.details.fat}g</span>
                     </div>
                   </div>
                 </CardContent>
