@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['"PT Sans"', 'sans-serif'],
+        headline: ['"PT Sans"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -44,6 +44,18 @@ export default {
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
+        },
+        safe: {
+          DEFAULT: 'hsl(var(--safe))',
+          foreground: 'hsl(var(--safe-foreground))',
+        },
+        risky: {
+          DEFAULT: 'hsl(var(--risky))',
+          foreground: 'hsl(var(--risky-foreground))',
+        },
+        unsafe: {
+          DEFAULT: 'hsl(var(--unsafe))',
+          foreground: 'hsl(var(--unsafe-foreground))',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

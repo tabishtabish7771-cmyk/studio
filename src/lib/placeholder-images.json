@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-image",
+      "description": "A person scanning a product with their phone in a grocery store.",
+      "imageUrl": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxncm9jZXJ5JTIwc2hvcHBpbmd8ZW58MHx8fHwxNzYyMzczODM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "grocery shopping"
+    },
+    {
+      "id": "product-cereal",
+      "description": "A box of colorful breakfast cereal.",
+      "imageUrl": "https://images.unsplash.com/photo-1556767576-cf0a4a80e5b8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjZXJlYWwlMjBib3h8ZW58MHx8fHwxNzYyMjc5MzY1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cereal box"
+    },
+    {
+      "id": "product-soda",
+      "description": "A can of fizzy soda.",
+      "imageUrl": "https://images.unsplash.com/photo-1585498154575-3db0fda49f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzb2RhJTIwY2FufGVufDB8fHx8MTc2MjI3OTcyMXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soda can"
+    },
+    {
+      "id": "product-chips",
+      "description": "A bag of potato chips.",
+      "imageUrl": "https://images.unsplash.com/photo-1694101493190-acc6c4418ad7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjaGlwcyUyMGJhZ3xlbnwwfHx8fDE3NjIyNzE5NTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chips bag"
+    },
+    {
+      "id": "product-yogurt",
+      "description": "A container of yogurt.",
+      "imageUrl": "https://images.unsplash.com/photo-1719077518310-faaad3b71dd3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx5b2d1cnQlMjBjdXB8ZW58MHx8fHwxNzYyMjQ0MjU5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "yogurt cup"
+    },
+    {
+      "id": "product-juice",
+      "description": "A carton of orange juice.",
+      "imageUrl": "https://images.unsplash.com/photo-1703179945401-e8cad5906cd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxqdWljZSUyMGNhcnRvbnxlbnwwfHx8fDE3NjIyNjk4MTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "juice carton"
+    },
+    {
+      "id": "product-bread",
+      "description": "A loaf of whole wheat bread.",
+      "imageUrl": "https://images.unsplash.com/photo-1598373182133-52452f7691ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxicmVhZCUyMGxvYWZ8ZW58MHx8fHwxNzYyMzczODM4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "bread loaf"
+    },
+    {
+      "id": "product-granola",
+      "description": "A bag of healthy granola.",
+      "imageUrl": "https://images.unsplash.com/photo-1644305660228-16b96b9f4be2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxncmFub2xhJTIwYmFnfGVufDB8fHx8MTc2MjM3MzgzOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "granola bag"
+    }
+  ]
 }
