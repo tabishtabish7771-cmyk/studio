@@ -45,7 +45,7 @@ export default function Home() {
               Shop Smarter. Eat Healthier.
             </h1>
             <p className="text-lg text-muted-foreground md:text-xl">
-              HealthWise Scan helps you understand what's in your food. Scan any
+              Smart Consumer helps you understand what's in your food. Scan any
               product barcode to instantly check its compatibility with your
               health needs.
             </p>

@@ -43,7 +43,7 @@ export default function Header() {
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <AppLogo className="h-6 w-6" />
             <span className="hidden font-bold sm:inline-block font-headline">
-              HealthWise Scan
+              Smart Consumer
             </span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
@@ -54,7 +54,7 @@ export default function Header() {
         <div className="flex flex-1 items-center justify-between space-x-2 md:hidden">
           <Link href="/" className="flex items-center space-x-2">
              <AppLogo className="h-6 w-6" />
-            <span className="font-bold font-headline">HealthWise Scan</span>
+            <span className="font-bold font-headline">Smart Consumer</span>
           </Link>
           <Sheet>
             <SheetTrigger asChild>

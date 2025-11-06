@@ -6,7 +6,7 @@ import Header from '@/components/header';
 import ChatWidget from '@/components/chat-widget';
 
 export const metadata: Metadata = {
-  title: 'HealthWise Scan',
+  title: 'Smart Consumer Health Compatibility Checker',
   description: 'An AI-powered health compatibility checker for your groceries.',
 };
 
