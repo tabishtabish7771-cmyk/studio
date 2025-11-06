@@ -114,6 +114,12 @@ export default function Home() {
           </Button>
         </div>
       </section>
+
+      <footer className="w-full bg-card py-6">
+        <div className="container mx-auto text-center text-muted-foreground text-sm">
+          <p>Created by: Abdul kadar shaz, Mohammed aahid, Hana Fathima, Mohammed Tabish</p>
+        </div>
+      </footer>
     </div>
   );
 }
