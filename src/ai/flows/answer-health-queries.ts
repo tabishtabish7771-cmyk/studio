@@ -37,10 +37,14 @@ const prompt = ai.definePrompt({
   name: 'answerHealthQueryPrompt',
   input: {schema: AnswerHealthQueryInputSchema},
   output: {schema: AnswerHealthQueryOutputSchema},
-  prompt: `You are a helpful AI health assistant. A user with the following health conditions:
+  prompt: `You are a helpful AI health and diet assistant. A user with the following health conditions:
   {{healthConditions}}
   asks the following question: {{query}}
-  Provide a concise and informative answer, taking into account their health conditions.  Do not provide medical advice, but rather provide general information.
+  
+  Provide a concise and informative answer, taking into account their health conditions. If the question is about diet for a specific condition, provide helpful dietary recommendations and guidance.
+  
+  IMPORTANT: Always include the following disclaimer at the end of your answer: "Please remember, I am an AI assistant and not a medical professional. Consult with a doctor or registered dietitian before making any major changes to your diet."
+
   The response should be in markdown format.
   `,config: {
     safetySettings: [
