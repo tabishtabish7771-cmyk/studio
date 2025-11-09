@@ -34,7 +34,9 @@ export function useUserProfile() {
 
   const profileRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
-    return doc(firestore, 'users', user.uid, 'profile');
+    // The document path must have an even number of segments.
+    // We will store the profile directly in the user's document.
+    return doc(firestore, 'users', user.uid);
   }, [firestore, user?.uid]);
 
   const { data: profileData, isLoading: isProfileLoading } = useDoc<UserProfile>(profileRef);
