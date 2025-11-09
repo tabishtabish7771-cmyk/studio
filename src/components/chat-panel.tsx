@@ -25,15 +25,12 @@ export function ChatPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const { profile, isLoaded: profileLoaded } = useUserProfile();
   const { toast } = useToast();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Scroll to bottom when messages change
-    if (scrollAreaRef.current) {
-        const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-        if (viewport) {
-            viewport.scrollTop = viewport.scrollHeight;
-        }
+    if (scrollViewportRef.current) {
+        scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -73,7 +70,7 @@ export function ChatPanel() {
 
   return (
     <div className="flex flex-col h-full">
-      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+      <ScrollArea className="flex-1 p-4" viewportRef={scrollViewportRef}>
         <div className="space-y-6">
           {messages.map((message) => (
             <div key={message.id} className={cn("flex items-start gap-3", message.sender === 'user' ? "justify-end" : "")}>
