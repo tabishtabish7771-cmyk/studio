@@ -2,9 +2,9 @@
   "placeholderImages": [
     {
       "id": "hero-image",
-      "description": "A person scanning a product with their phone in a grocery store.",
-      "imageUrl": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxncm9jZXJ5JTIwc2hvcHBpbmd8ZW58MHx8fHwxNzYyMzczODM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "grocery shopping"
+      "description": "An apple being scanned for nutritional information.",
+      "imageUrl": "https://storage.googleapis.com/aifirebase/scannable-images/apple-scan.jpg",
+      "imageHint": "apple scan"
     },
     {
       "id": "product-cereal",
