@@ -7,7 +7,7 @@
  * is publicly readable.
  *
  * Data Structure:
- * - /users/{userId}/profile: Stores user profile data, accessible only by the user.
+ * - /users/{userId}: Stores user profile data, accessible only by the user.
  * - /users/{userId}/scanResults/{scanResultId}: Stores scan results, accessible only by the user.
  * - /products/{productId}: Stores product information, publicly readable.
  *
@@ -26,14 +26,14 @@ service cloud.firestore {
 
     /**
      * @description Controls access to user profile documents.
-     * @path /users/{userId}/profile
+     * @path /users/{userId}
      * @allow (create) User 'user123' can create their profile with matching userId in the document.
      * @allow (get, update, delete) User 'user123' can access their profile.
      * @deny (create) User 'user456' cannot create a profile under 'user123'.
      * @deny (get, update, delete) User 'user456' cannot access 'user123' profile.
      * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
      */
-    match /users/{userId}/profile {
+    match /users/{userId} {
       function isOwner(userId) {
         return request.auth.uid == userId;
       }
