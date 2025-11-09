@@ -1,0 +1,206 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's health profile, including personal details and medical conditions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user profile."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's name."
+        },
+        "age": {
+          "type": "number",
+          "description": "The user's age in years."
+        },
+        "gender": {
+          "type": "string",
+          "description": "The user's gender."
+        },
+        "medicalConditions": {
+          "type": "array",
+          "description": "An array of medical conditions the user has.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allergies": {
+          "type": "array",
+          "description": "An array of allergies the user has.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "age",
+        "gender"
+      ]
+    },
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product scanned by the user, containing product details and nutritional information.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "barcode": {
+          "type": "string",
+          "description": "The product's barcode."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the product."
+        },
+        "ingredients": {
+          "type": "array",
+          "description": "An array of ingredients in the product.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "calories": {
+          "type": "number",
+          "description": "The number of calories in the product."
+        },
+        "sugar": {
+          "type": "number",
+          "description": "The amount of sugar in the product."
+        },
+        "sodium": {
+          "type": "number",
+          "description": "The amount of sodium in the product."
+        },
+        "fat": {
+          "type": "number",
+          "description": "The amount of fat in the product."
+        }
+      },
+      "required": [
+        "id",
+        "barcode",
+        "name"
+      ]
+    },
+    "ScanResult": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ScanResult",
+      "type": "object",
+      "description": "Represents the result of scanning a product, including the safety analysis and recommendations.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the scan result."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N ScanResult)"
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to Product. (Relationship: Product 1:N ScanResult)"
+        },
+        "scanDate": {
+          "type": "string",
+          "description": "The date and time the product was scanned.",
+          "format": "date-time"
+        },
+        "safetyStatus": {
+          "type": "string",
+          "description": "The safety status of the product for the user (Safe, Risky, Unsafe)."
+        },
+        "aiExplanation": {
+          "type": "string",
+          "description": "An AI-generated explanation of the safety status."
+        },
+        "recommendedProductIds": {
+          "type": "array",
+          "description": "References to recommended alternative Products. (Relationship: Product 1:N ScanResult)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "productId",
+        "scanDate",
+        "safetyStatus"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/profile",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile data. Path-based ownership ensures only the authenticated user can access their profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/scanResults/{scanResultId}",
+        "definition": {
+          "entityName": "ScanResult",
+          "schema": {
+            "$ref": "#/backend/entities/ScanResult"
+          },
+          "description": "Stores scan results for a specific user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "scanResultId",
+              "description": "The unique identifier for the scan result."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores product information. Products are publicly readable.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier for the product."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability for the HealthWise Scan application. User profiles and scan results are structured to facilitate straightforward security rules without relying on hierarchical `get()` calls. Products are stored in a global collection as they are shared across all users.\n\n**Authorization Independence:** User-specific data (UserProfile and ScanResult) are stored under the `/users/{userId}` path, ensuring that access control can be directly tied to the authenticated user's ID. The `ScanResult` documents denormalize the `userId`, which removes the need to perform a `get()` request to the parent `UserProfile` to check ownership. The `productId` allows the app to retrieve product information, but product access is public.\n\n**QAPs Support:** The structure supports secure list operations by segregating user-specific data under their respective user IDs, as in `/users/{userId}/scanResults`. This allows for rules to filter based on `request.auth.uid == userId` and avoids the need for complex filtering within the rules themselves, preventing the Rules are not Filters anti-pattern.\n\n**Global Products Collection:** Products are stored in a single global `/products` collection. Since the application does not specify any role-based access control for products, this allows for simple reads. If role-based access control were to be required, a membership map would need to be added to the document.\n\n**Radical Consistency:** Naming conventions such as `userId`, `productId`, and `scanDate` are used consistently across the database to ensure a predictable schema, simplify queries, and improve debuggability."
+  }
+}

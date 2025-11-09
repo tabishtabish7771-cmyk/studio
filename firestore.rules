@@ -1,0 +1,91 @@
+/**
+ * @fileoverview Firestore Security Rules for HealthWise Scan.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user profiles and scan results,
+ * ensuring that only authenticated users can access their own data. Product information
+ * is publicly readable.
+ *
+ * Data Structure:
+ * - /users/{userId}/profile: Stores user profile data, accessible only by the user.
+ * - /users/{userId}/scanResults/{scanResultId}: Stores scan results, accessible only by the user.
+ * - /products/{productId}: Stores product information, publicly readable.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed.
+ * - Public read access is granted to product information.
+ * - All write operations require authentication.
+ * - Data consistency is enforced between the path and the document's internal fields for user-owned documents.
+ *
+ * Denormalization for Authorization:
+ * - ScanResult documents include the userId to allow direct ownership checks without additional reads.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user profile documents.
+     * @path /users/{userId}/profile
+     * @allow (create) User 'user123' can create their profile with matching userId in the document.
+     * @allow (get, update, delete) User 'user123' can access their profile.
+     * @deny (create) User 'user456' cannot create a profile under 'user123'.
+     * @deny (get, update, delete) User 'user456' cannot access 'user123' profile.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/profile {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to scan result documents.
+     * @path /users/{userId}/scanResults/{scanResultId}
+     * @allow (create) User 'user123' can create a scan result under their ID.
+     * @allow (get, update, delete) User 'user123' can access their own scan results.
+     * @deny (create) User 'user456' cannot create a scan result under 'user123'.
+     * @deny (get, update, delete) User 'user456' cannot access 'user123' scan results.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId}/scanResults/{scanResultId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to product documents. Products are publicly readable.
+     * @path /products/{productId}
+     * @allow (get, list) Any user can read product information.
+     * @deny (create, update, delete) No user can create, update, or delete product information without specific authorization logic.
+     * @principle Grants public read access to product information while restricting write access.
+     */
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // TODO: Add owner validation once the schema is updated with an ownership field.
+    }
+  }
+}
