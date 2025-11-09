@@ -2,9 +2,9 @@
   "placeholderImages": [
     {
       "id": "hero-image",
-      "description": "An apple being scanned for nutritional information.",
-      "imageUrl": "https://storage.googleapis.com/aifirebase/scannable-images/apple-scan.jpg",
-      "imageHint": "apple scan"
+      "description": "A QR code being scanned by a magnifying glass.",
+      "imageUrl": "https://storage.googleapis.com/aifirebase/scannable-images/qr-code-scan.jpg",
+      "imageHint": "QR code scan"
     },
     {
       "id": "product-cereal",
