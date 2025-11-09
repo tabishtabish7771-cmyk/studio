@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/header';
 import ChatWidget from '@/components/chat-widget';
+import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'Smart Consumer Health Compatibility Checker',
@@ -35,10 +36,12 @@ export default function RootLayout({
           'flex flex-col'
         )}
       >
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Toaster />
-        <ChatWidget />
+        <FirebaseClientProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Toaster />
+          <ChatWidget />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
