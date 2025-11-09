@@ -1,3 +1,5 @@
+import { HistoryTable } from "@/components/dashboard/history-table";
+import { MotivationalQuote } from "@/components/dashboard/motivational-quote";
 import { OverviewChart } from "@/components/dashboard/overview-chart";
 import { ScansChart } from "@/components/dashboard/scans-chart";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,6 +65,22 @@ export default function DashboardPage() {
             </Card>
         </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-8 mb-8">
+            <div className="lg:col-span-5">
+                <Card className="shadow-md h-full">
+                    <CardHeader>
+                        <CardTitle className="font-headline">Recent Scans</CardTitle>
+                        <CardDescription>A log of your recently scanned products.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <HistoryTable />
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="lg:col-span-2">
+                 <MotivationalQuote />
+            </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <Card className="shadow-md">

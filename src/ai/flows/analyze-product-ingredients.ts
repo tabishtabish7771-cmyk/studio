@@ -30,6 +30,7 @@ const AnalyzeProductOutputSchema = z.object({
       sugar: z.number().describe('Sugar content per serving (grams).'),
       sodium: z.number().describe('Sodium content per serving (milligrams).'),
       fat: z.number().describe('Fat content per serving (grams).'),
+      protein: z.number().describe('Protein content per serving (grams).'),
   }),
   safe: z.boolean().describe('Whether the product is safe for the user.'),
   status: z.enum(['safe', 'risky', 'unsafe']).describe('Safety status color-coded.'),
@@ -50,7 +51,7 @@ const analyzeProductPrompt = ai.definePrompt({
   prompt: `You are a health expert. A user has provided an image of a product.
   Your task is to:
   1. Identify the product in the image.
-  2. Estimate its nutritional information (calories, sugar, sodium, fat).
+  2. Estimate its nutritional information (calories, sugar, sodium, fat, protein).
   3. Analyze the product against the user's health profile to determine if it is 'safe', 'risky', or 'unsafe'.
   4. Provide a brief explanation for your analysis. If a product is 'risky', explain that it can be consumed in moderation, but not continuously, and suggest how much could be consumed safely.
   5. Suggest 2-3 healthier alternative products.

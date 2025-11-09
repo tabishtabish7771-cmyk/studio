@@ -15,6 +15,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useFirebase, addDocumentNonBlocking } from '@/firebase';
+import { collection } from 'firebase/firestore';
 
 
 type ScanState = 'idle' | 'loading' | 'result' | 'error';
@@ -30,6 +32,7 @@ export default function ScanPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isListening, setIsListening] = useState(false);
+  const { firestore, user } = useFirebase();
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -62,6 +65,26 @@ export default function ScanPage() {
     };
   }, [toast, scanState]);
 
+  const saveScanResult = async (analysisResult: AnalyzeProductOutput) => {
+    if (!firestore || !user) return;
+  
+    const scanResultData = {
+      userId: user.uid,
+      scanDate: new Date().toISOString(),
+      productName: analysisResult.productName,
+      safetyStatus: analysisResult.status,
+      aiExplanation: analysisResult.explanation,
+      calories: analysisResult.details.calories,
+      sugar: analysisResult.details.sugar,
+      sodium: analysisResult.details.sodium,
+      fat: analysisResult.details.fat,
+      protein: analysisResult.details.protein,
+    };
+  
+    const scanResultsColRef = collection(firestore, 'users', user.uid, 'scanResults');
+    addDocumentNonBlocking(scanResultsColRef, scanResultData);
+  };
+
   const startAnalysis = async (imageDataUri: string) => {
     if (!profile.name || !profile.medicalConditions) {
       toast({
@@ -93,6 +116,7 @@ export default function ScanPage() {
       });
       setAnalysis(result);
       setScanState('result');
+      await saveScanResult(result);
     } catch (error) {
       console.error('AI analysis failed', error);
       setScanState('error');
@@ -295,6 +319,7 @@ export default function ScanPage() {
                         <span>Sugar: {analysis.details.sugar}g</span>
                         <span>Sodium: {analysis.details.sodium}mg</span>
                         <span>Fat: {analysis.details.fat}g</span>
+                        <span>Protein: {analysis.details.protein}g</span>
                     </div>
                   </div>
                 </CardContent>
